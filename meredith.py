@@ -10,26 +10,33 @@ from ouimeaux.utils import matcher
 from ouimeaux.signals import receiver, statechange, devicefound
 from ouimeaux.utils import get_ip_address
 
+triggers = {
+    'Bedroom switch':'Bedroom lamp',
+    'Front Door Switch':'Living Room Lamp'
+}
 
-def mainloop(source, target):
-    source_matcher = matcher(source)
-    target_matcher = matcher(target)
+
+def mainloop():
+    #source_matcher = matcher(source)
     random_port = randint(54300, 54499)
-    
+
     env = Environment(bind="%s:%d"%(get_ip_address(), random_port))
 
 
     @receiver(devicefound)
     def found(sender, **kwargs):
-        if source_matcher(sender.name) or target_matcher(sender.name):
-            print "Found device:", sender.name
+        for key in (triggers.keys() + triggers.values()):
+            if matcher(key)(sender.name):
+                print "Found device:", sender.name
 
     @receiver(statechange)
     def something_happened(sender, **kwargs):
-        if source_matcher(sender.name):
-            state = 1 if kwargs.get('state') else 0
-            print "{} state is {state}".format(sender.name, state=state)
-            set_target_state(target, state)
+        print "Something happened with %s"%sender
+        for key in triggers.keys():
+            if matcher(key)(sender.name):
+                state = 1 if kwargs.get('state') else 0
+                print "{} state is {state}".format(sender.name, state=state)
+                set_target_state(triggers[key], state)
 
     #this will intentionally not stop after it finds a first match so that we can use common prefixes to form groups
     def set_target_state(name, state):
@@ -60,12 +67,12 @@ def mainloop(source, target):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("WeMo State Mirrorer")
-    parser.add_argument("source", metavar="SOURCE",
-                        help="Name (fuzzy matchable)"
-                             " of the source WeMo device")
-    parser.add_argument("target", metavar="TARGET",
-                        help="Name (fuzzy matchable)"
-                             " of the target WeMo device")
-    args = parser.parse_args()
-    mainloop(args.source, args.target)
+    # parser = argparse.ArgumentParser("WeMo State Mirrorer")
+    # parser.add_argument("source", metavar="SOURCE",
+    #                     help="Name (fuzzy matchable)"
+    #                          " of the source WeMo device")
+    # parser.add_argument("target", metavar="TARGET",
+    #                     help="Name (fuzzy matchable)"
+    #                          " of the target WeMo device")
+    # args = parser.parse_args()
+    mainloop()
