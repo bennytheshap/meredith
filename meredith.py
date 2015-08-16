@@ -20,7 +20,7 @@ def mainloop():
     #source_matcher = matcher(source)
     random_port = randint(54300, 54499)
 
-    env = Environment(bind="%s:%d"%(get_ip_address(), random_port))
+    env = Environment(bind="%s:%d"%(get_ip_address(), random_port), with_cache=False)
 
 
     @receiver(devicefound)
