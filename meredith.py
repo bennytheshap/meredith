@@ -41,25 +41,29 @@ def mainloop():
     #this will intentionally not stop after it finds a first match so that we can use common prefixes to form groups
     def set_target_state(name, state):
         for switch_name in env.list_switches():
-            if target_matcher(switch_name):
+            if matcher(name)(switch_name):
+                print "Found a switch matching name %s" % name
                 switch = env.get_switch(switch_name)
                 switch.set_state(state)
 
         if len(env.list_bridges()) > 0:
             bridge = env.get_bridge(env.list_bridges()[0])
             for light_name in bridge.bridge_get_lights():
-                if target_matcher(light_name):
+                if matcher(name)(light_name):
                     print "telling target (via bridge) to set state to %s"%state
                     light = bridge.bridge_get_lights()[light_name]
                     bridge.light_set_state(light, state=state, dim=254 if state==1 else None)
 
     try:
+        print "Starting..."
         env.start()
         #env.upnp.server
         env.discover(1)
         sock = env.upnp.server._socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        print "\t... discovering nearby devices"
         env.discover(10)
+        print "Entering main loop"
         env.wait()
     except (KeyboardInterrupt, SystemExit):
         print "Goodbye!"
