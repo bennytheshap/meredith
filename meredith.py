@@ -11,8 +11,9 @@ from ouimeaux.signals import receiver, statechange, devicefound
 from ouimeaux.utils import get_ip_address
 
 triggers = {
-    'Bedroom switch':'Bedroom lamp',
-    'Front Door Switch':'Living Room Lamp'
+    'Bedroom Switch':'Bedroom Lamp',
+    'Front Door Switch':'Living Room Lamp',
+    'Guest Room Switch':'Guest Room Desk Lamp'
 }
 
 
