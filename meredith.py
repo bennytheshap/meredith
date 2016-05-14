@@ -2,6 +2,7 @@
 import argparse
 import sys
 import socket
+import itertools
 
 from random import randint
 
@@ -11,9 +12,7 @@ from ouimeaux.signals import receiver, statechange, devicefound
 from ouimeaux.utils import get_ip_address
 
 triggers = {
-    'Bedroom Switch':'Bedroom Lamp',
-    'Front Door Switch':'Living Room Lamp',
-    'Guest Room Switch':'Guest Room Desk Lamp'
+    'Loft Steps':['Loft Bridge', 'Loft Lamp']
 }
 
 
@@ -26,7 +25,14 @@ def mainloop():
 
     @receiver(devicefound)
     def found(sender, **kwargs):
-        for key in (triggers.keys() + triggers.values()):
+        all_targets = []
+        for target in triggers.values():
+            if isinstance(target, list):
+                all_targets.extend(target)
+            else:
+                all_targets.append(target)
+
+        for key in (triggers.keys() + all_targets):
             if matcher(key)(sender.name):
                 print "Found device:", sender.name
 
@@ -37,10 +43,16 @@ def mainloop():
             if matcher(key)(sender.name):
                 state = 1 if kwargs.get('state') else 0
                 print "{} state is {state}".format(sender.name, state=state)
-                set_target_state(triggers[key], state)
+                if isinstance(triggers[key], list):
+                    for target in triggers[key]:
+                        set_target_state(target, state)
+                else:
+                    set_target_state(triggers[key], state)
+
 
     #this will intentionally not stop after it finds a first match so that we can use common prefixes to form groups
     def set_target_state(name, state):
+        print "!!!  Set '%s' State = %s"%(name, state)
         for switch_name in env.list_switches():
             if matcher(name)(switch_name):
                 print "Found a switch matching name %s" % name
@@ -59,7 +71,7 @@ def mainloop():
         print "Starting..."
         env.start()
         #env.upnp.server
-        env.discover(1)
+        env.discover(2)
         sock = env.upnp.server._socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         print "\t... discovering nearby devices"
